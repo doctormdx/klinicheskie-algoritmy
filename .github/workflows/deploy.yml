@@ -38,7 +38,13 @@ jobs:
           AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
           BUCKET: ${{ vars.YC_BUCKET }}
         run: |
-          echo "::notice title=Бакет::[$BUCKET]"
+          SHOW="${BUCKET//$'\n'/ ⏎ }"
+          echo "::notice title=Бакет::[$SHOW]"
+          case "$BUCKET" in
+            ""|*[[:space:]]*)
+              echo "::error title=Переменная YC_BUCKET::Имя бакета должно быть одной строкой без пробелов и переносов. Сейчас: [$SHOW]"
+              exit 1;;
+          esac
           # Бакет с точкой в имени (как домен) — только path-style адресация
           aws configure set default.s3.addressing_style path
           # Если загрузка не удалась, текст ошибки виден в сводке запуска на GitHub
