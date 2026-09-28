@@ -5,6 +5,16 @@
   var YM = Number(body.getAttribute('data-ym')) || 0;
   var page = body.getAttribute('data-page');
 
+  // Отметка «новое»: держится NEW_DAYS дней с даты добавления (дата по Москве, ГГГГ-ММ-ДД)
+  var NEW_DAYS = Number(body.getAttribute('data-new-days')) || 30;
+  function isNew(d) {
+    return !!d && Date.now() - Date.parse(d + 'T00:00:00+03:00') < NEW_DAYS * 864e5;
+  }
+  var badges = document.querySelectorAll('.badge-new[data-d]');
+  for (var bi = 0; bi < badges.length; bi++) {
+    if (!isNew(badges[bi].getAttribute('data-d'))) badges[bi].parentNode.removeChild(badges[bi]);
+  }
+
   function norm(s) {
     return String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/[^a-z0-9а-я]+/g, ' ').trim();
   }
@@ -148,7 +158,8 @@
         var it = current[i];
         var meta = [it.sec, TYPE_LABEL(it.y)];
         if (it.p.length) meta.push(it.p.map(function (c) { return PATIENT_SHORT[c]; }).join(', '));
-        html += '<li><a href="' + it.u + '"><span class="t">' + esc(it.t) + '</span><span class="m">' + esc(meta.filter(Boolean).join(' · ')) + '</span></a></li>';
+        var badge = isNew(it.d) ? ' <span class="badge-new">новое</span>' : '';
+        html += '<li><a href="' + it.u + '"><span class="t">' + esc(it.t) + badge + '</span><span class="m">' + esc(meta.filter(Boolean).join(' · ')) + '</span></a></li>';
       }
       listEl.insertAdjacentHTML('beforeend', html);
       shown = end;

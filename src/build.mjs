@@ -3,12 +3,17 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
 import * as T from './templates.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const CONTENT = path.join(ROOT, 'content');
 const OUT = path.join(ROOT, 'dist');
+
+// «Новые схемы»
+export const NEW_DAYS = 30;   // сколько дней после добавления схема отмечена «новое»
+const NEW_ON_HOME = 5;        // сколько последних схем показывать на главной
 
 const readJson = async (p) => JSON.parse(await fs.readFile(p, 'utf8'));
 const hash = (buf) => crypto.createHash('sha1').update(buf).digest('hex').slice(0, 8);
@@ -36,6 +41,40 @@ export const PATIENTS = {
   'Новорождённые и младенцы': 'newborn',
   'Беременные': 'preg',
 };
+
+// Дата добавления схемы = время коммита, в котором появился её файл
+// (при сохранении новой схемы в админке это время сохранения).
+// Схемы из самого первого коммита — исходный каталог — новыми не считаются.
+function addedDates() {
+  const git = (...args) => execFileSync('git', args, {
+    cwd: ROOT, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'],
+  }).trim();
+  const dates = new Map();
+  try {
+    if (git('rev-parse', '--is-shallow-repository') === 'true') {
+      console.warn('  история git неполная — «Новые схемы» не определены');
+      return dates;
+    }
+    const roots = new Set(git('rev-list', '--max-parents=0', 'HEAD').split('\n'));
+    const log = git('log', '--diff-filter=A', '--name-only', '--format=@%H %cI', '--', 'content/schemes');
+    let commit = '', date = '';
+    for (const line of log.split('\n')) {
+      if (line.startsWith('@')) {
+        [commit, date] = line.slice(1).split(' ');
+        continue;
+      }
+      if (!line.endsWith('.json')) continue;
+      const slug = slugify(path.basename(line, '.json'));
+      // лог идёт от новых коммитов к старым: берём самое позднее добавление
+      if (!dates.has(slug)) dates.set(slug, roots.has(commit) ? null : date);
+    }
+  } catch {
+    console.warn('  git недоступен — «Новые схемы» не определены');
+  }
+  return dates;
+}
+
+const moscowDate = (iso) => new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Moscow' });
 
 async function listJson(dir) {
   try {
@@ -118,6 +157,7 @@ async function main() {
   const byName = new Map(sections.map((s) => [s.name, s]));
 
   // Схемы
+  const added = addedDates();
   const schemes = [];
   for (const f of await listJson(path.join(CONTENT, 'schemes'))) {
     const s = await readJson(path.join(CONTENT, 'schemes', f));
@@ -133,6 +173,7 @@ async function main() {
       byName.set(section.name, section);
     }
     const extra = (s.extra_sections || []).map((n) => byName.get(n.trim())).filter((x) => x && x !== section);
+    const addedAt = added.get(slug) || null;
     schemes.push({
       ...s,
       slug,
@@ -143,6 +184,8 @@ async function main() {
       typeCodes: TYPES[s.type] || [],
       patientCodes: (s.patients || []).map((p) => PATIENTS[p]).filter(Boolean),
       keywords: (s.keywords || '').trim(),
+      addedAt,
+      added: addedAt ? moscowDate(addedAt) : '',
     });
   }
   const collator = new Intl.Collator('ru');
@@ -168,6 +211,12 @@ async function main() {
   }
   const ready = schemes.filter((s) => s.img);
 
+  // Новые схемы: всё, что добавлено после исходного каталога, — сначала самые свежие
+  const now = Date.now();
+  for (const s of ready) s.isNew = !!s.addedAt && now - Date.parse(s.addedAt) < NEW_DAYS * 864e5;
+  const recent = ready.filter((s) => s.addedAt)
+    .sort((a, b) => Date.parse(b.addedAt) - Date.parse(a.addedAt) || collator.compare(a.title, b.title));
+
   // Скрипт и поисковый индекс с хэшем в имени (долгое кэширование)
   const appJs = await fs.readFile(path.join(ROOT, 'src', 'assets', 'app.js'));
   const appName = `assets/app-${hash(appJs)}.js`;
@@ -182,6 +231,7 @@ async function main() {
       p: s.patientCodes,
       k: s.keywords,
       e: s.title_en || '',
+      ...(s.added ? { d: s.added } : {}),
     })),
   };
   const indexBuf = Buffer.from(JSON.stringify(index));
@@ -189,11 +239,12 @@ async function main() {
   await write(indexName, indexBuf);
 
   const css = await fs.readFile(path.join(ROOT, 'src', 'assets', 'style.css'), 'utf8');
-  const ctx = { settings, css, appSrc: `/${appName}`, indexSrc: `/${indexName}`, total: ready.length };
+  const ctx = { settings, css, appSrc: `/${appName}`, indexSrc: `/${indexName}`, total: ready.length, newDays: NEW_DAYS };
 
   for (const sec of visibleSections) sec.schemes = sec.schemes.filter((s) => s.img);
 
-  await write('index.html', T.home(ctx, visibleSections));
+  await write('index.html', T.home(ctx, visibleSections, recent.slice(0, NEW_ON_HOME), recent.length));
+  await write('new/index.html', T.newSchemes(ctx, recent));
   await write('all/index.html', T.all(ctx, ready));
   for (const sec of visibleSections) await write(`r/${sec.slug}/index.html`, T.section(ctx, sec));
   for (const s of ready) await write(`s/${s.slug}/index.html`, T.scheme(ctx, s));
@@ -201,7 +252,7 @@ async function main() {
   await fs.copyFile(path.join(ROOT, 'src', 'assets', 'favicon.svg'), path.join(OUT, 'favicon.svg'));
 
   if (settings.site_url) {
-    const urls = ['/', '/all/', ...visibleSections.map((s) => `/r/${s.slug}/`), ...ready.map((s) => s.url)];
+    const urls = ['/', ...(recent.length ? ['/new/'] : []), '/all/', ...visibleSections.map((s) => `/r/${s.slug}/`), ...ready.map((s) => s.url)];
     await write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${settings.site_url}${u}</loc></url>`).join('\n')}\n</urlset>\n`);
     await write('robots.txt', `User-agent: *\nDisallow: /admin/\nSitemap: ${settings.site_url}/sitemap.xml\n`);
   } else {
@@ -210,7 +261,7 @@ async function main() {
 
   if (!process.argv.includes('--no-admin')) await buildAdmin(settings);
 
-  console.log(`Готово за ${((Date.now() - t0) / 1000).toFixed(1)} с: схем ${ready.length}, разделов ${visibleSections.length}, картинки ${(totalImg / 1048576).toFixed(1)} МБ`);
+  console.log(`Готово за ${((Date.now() - t0) / 1000).toFixed(1)} с: схем ${ready.length} (новых ${recent.length}), разделов ${visibleSections.length}, картинки ${(totalImg / 1048576).toFixed(1)} МБ`);
 }
 
 main().catch((e) => {

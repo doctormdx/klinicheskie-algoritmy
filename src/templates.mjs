@@ -45,7 +45,7 @@ ${canonical}
 <style>${ctx.css}</style>
 <script defer src="${ctx.appSrc}"></script>
 </head>
-<body data-page="${page}" data-index="${ctx.indexSrc}"${/^\d+$/.test(String(s.metrika_id || '')) ? ` data-ym="${s.metrika_id}"` : ''}>
+<body data-page="${page}" data-index="${ctx.indexSrc}" data-new-days="${ctx.newDays}"${/^\d+$/.test(String(s.metrika_id || '')) ? ` data-ym="${s.metrika_id}"` : ''}>
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="/">${esc(s.site_title)}</a>
@@ -93,7 +93,22 @@ function row(s, withSection = false) {
   return `<li data-y="${s.typeCodes.join(' ')}" data-p="${s.patientCodes.join(' ')}" data-k="${esc(k)}"><a href="${s.url}"><span class="t">${esc(s.title)}</span><span class="m">${esc(metaLine(s, withSection))}</span></a></li>`;
 }
 
-export function home(ctx, sections) {
+// Дата добавления: «3 октября», для прошлых лет — «3 октября 2025»
+function fmtDate(ymd) {
+  const d = new Date(`${ymd}T12:00:00+03:00`);
+  const sameYear = ymd.slice(0, 4) === new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Moscow' }).slice(0, 4);
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }), timeZone: 'Europe/Moscow' })
+    .replace(/\s*г\.$/, '');
+}
+
+// Строка списка «Новые схемы»: раздел и дата добавления, отметка «новое» первые NEW_DAYS дней
+// (data-d — чтобы скрипт снял устаревшую отметку, даже если сайт давно не пересобирался)
+function rowNew(s) {
+  const badge = s.isNew ? ` <span class="badge-new" data-d="${s.added}">новое</span>` : '';
+  return `<li><a href="${s.url}"><span class="t">${esc(s.title)}${badge}</span><span class="m">${esc(s.section.name)} · ${esc(fmtDate(s.added))}</span></a></li>`;
+}
+
+export function home(ctx, sections, recent = [], recentTotal = 0) {
   const body = `
 <section class="hero">
   <h1 class="vh">${esc(ctx.settings.site_title)}</h1>
@@ -111,6 +126,13 @@ export function home(ctx, sections) {
   <button type="button" class="more" hidden>Показать ещё</button>
 </section>
 <section id="browse">
+  ${recent.length ? `<section class="recent" aria-labelledby="recent-h">
+  <h2 id="recent-h">Новые схемы</h2>
+  <ul class="list">
+    ${recent.map(rowNew).join('\n    ')}
+  </ul>
+  <p class="all-link"><a href="/new/">Все новые схемы (${recentTotal})</a></p>
+  </section>` : ''}
   <h2>Разделы</h2>
   <ul class="nav-list">
     ${sections.map((s) => `<li><a href="/r/${s.slug}/"><span class="t">${esc(s.name)}</span><span class="n">${s.schemes.length}</span>${ICON_CHEVRON}</a></li>`).join('\n    ')}
@@ -197,6 +219,24 @@ ${letters.map((l, i) => `<h2 id="l${i}" class="letter">${esc(l)}</h2>
   ${groups.get(l).map((s) => row(s, true)).join('\n  ')}
 </ul>`).join('\n')}`;
   return layout(ctx, { title: 'Все схемы по алфавиту', path: '/all/', page: 'all', body });
+}
+
+export function newSchemes(ctx, list) {
+  const body = `
+<nav class="crumbs" aria-label="Навигация"><a href="/">Главная</a></nav>
+<h1>Новые схемы</h1>
+${list.length ? `<p class="lead">${esc(schemesCount(list.length))}, сначала самые свежие</p>
+<ul class="list">
+  ${list.map(rowNew).join('\n  ')}
+</ul>` : `<p class="lead">Новые схемы появятся здесь сразу после добавления.</p>
+<p><a class="btn" href="/all/">Все схемы по алфавиту</a></p>`}`;
+  return layout(ctx, {
+    title: 'Новые схемы',
+    description: 'Недавно добавленные клинические алгоритмы на русском языке.',
+    path: '/new/',
+    page: 'new',
+    body,
+  });
 }
 
 export function notFound(ctx) {
