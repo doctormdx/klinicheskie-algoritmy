@@ -1,0 +1,12 @@
+{
+  "title": "Первичная диагностика аортита",
+  "section": "Ревматология",
+  "extra_sections": [
+    "Кардиология и сосуды"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "васкулит, Такаясу, гигантоклеточный артериит",
+  "title_en": "Aortitis initial diagnosis algorithm",
+  "image": "/images/s033.webp"
+}

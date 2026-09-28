@@ -1,0 +1,12 @@
+{
+  "title": "Оценка инфекции вирусом гепатита D",
+  "section": "Инфекционные болезни и вакцинация",
+  "extra_sections": [
+    "Гастроэнтерология и гепатология"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "ВГД, HDV, дельта-гепатит",
+  "title_en": "Hepatitis D infection evaluation algorithm",
+  "image": "/images/s199.webp"
+}

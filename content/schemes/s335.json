@@ -1,0 +1,12 @@
+{
+  "title": "Обследование при подозрении на первичный ангиит центральной нервной системы",
+  "section": "Неврология",
+  "extra_sections": [
+    "Ревматология"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "ПАЦНС, васкулит ЦНС, PACNS",
+  "title_en": "Suspected PACNS testing overview algorithm",
+  "image": "/images/s335.webp"
+}

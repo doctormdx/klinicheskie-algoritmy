@@ -1,0 +1,14 @@
+{
+  "title": "Оценка оптической нейропатии у взрослых",
+  "section": "Офтальмология",
+  "extra_sections": [
+    "Неврология"
+  ],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "зрительный нерв, ДЗН",
+  "title_en": "Optic neuropathy in adults evaluation algorithm",
+  "image": "/images/s271.webp"
+}

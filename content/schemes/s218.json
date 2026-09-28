@@ -1,0 +1,12 @@
+{
+  "title": "Оценка лихорадки в отделении интенсивной терапии",
+  "section": "Неотложная помощь, реанимация и анестезиология",
+  "extra_sections": [
+    "Инфекционные болезни и вакцинация"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "ОРИТ, ICU",
+  "title_en": "ICU fever evaluation algorithm",
+  "image": "/images/s218.webp"
+}

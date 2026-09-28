@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика эритроцитоза у взрослых",
+  "section": "Гематология",
+  "extra_sections": [],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "гематокрит, JAK2",
+  "title_en": "Erythrocytosis in adults diagnosis algorithm",
+  "image": "/images/s098.webp"
+}

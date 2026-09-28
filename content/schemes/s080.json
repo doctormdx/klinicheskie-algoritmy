@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика подозреваемого тромбоза глубоких вен у взрослых амбулаторных пациентов по трёхуровневой шкале Уэллса",
+  "section": "Кардиология и сосуды",
+  "extra_sections": [],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "ТГВ, ДВТ, DVT, шкала Уэллса, D-димер, УЗДС вен",
+  "title_en": "Diagnostic algorithm for adult outpatients with suspected DVT based on the 3-level Wells score (original score)",
+  "image": "/images/s080.webp"
+}

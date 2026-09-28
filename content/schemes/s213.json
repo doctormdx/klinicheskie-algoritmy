@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика гипогликемии у взрослых без диабета",
+  "section": "Эндокринология",
+  "extra_sections": [],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "СД, сахарный диабет, глюкоза, сахар крови",
+  "title_en": "Hypoglycemia in adults without diabetes diagnosis algorithm",
+  "image": "/images/s213.webp"
+}

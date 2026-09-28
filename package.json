@@ -1,0 +1,19 @@
+{
+  "name": "klinicheskie-algoritmy",
+  "version": "1.0.0",
+  "description": "Сайт с клиническими алгоритмами для врачей",
+  "scripts": {
+    "build": "node src/build.mjs",
+    "build:fast": "node src/build.mjs --no-admin",
+    "preview": "npx --yes serve dist -l 4321"
+  },
+  "devDependencies": {
+    "@sveltia/cms": "^0.221.8",
+    "sharp": "^0.34.5"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  }
+}

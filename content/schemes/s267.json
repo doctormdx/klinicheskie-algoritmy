@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика нистагма",
+  "section": "Неврология",
+  "extra_sections": [
+    "Офтальмология"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "движения глаз",
+  "title_en": "Nystagmus diagnosis algorithm",
+  "image": "/images/s267.webp"
+}

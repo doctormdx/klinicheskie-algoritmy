@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика хронической одышки",
+  "section": "Пульмонология",
+  "extra_sections": [
+    "Кардиология и сосуды"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "диспноэ",
+  "title_en": "Chronic dyspnea diagnosis algorithm",
+  "image": "/images/s056.webp"
+}

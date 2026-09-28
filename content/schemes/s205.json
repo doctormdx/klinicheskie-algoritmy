@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика гиперкальциемии",
+  "section": "Водно-электролитные нарушения и КОС",
+  "extra_sections": [
+    "Эндокринология"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "кальций, Ca, ПТГ",
+  "title_en": "Hypercalcemia diagnosis algorithm",
+  "image": "/images/s205.webp"
+}

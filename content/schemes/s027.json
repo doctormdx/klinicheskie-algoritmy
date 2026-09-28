@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика анемии у взрослых",
+  "section": "Гематология",
+  "extra_sections": [],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "гемоглобин, железодефицит",
+  "title_en": "Anemia in adults diagnosis algorithm",
+  "image": "/images/s027.webp"
+}

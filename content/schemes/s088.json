@@ -1,0 +1,14 @@
+{
+  "title": "Диагностика и лечение внематочной беременности",
+  "section": "Акушерство и гинекология",
+  "extra_sections": [
+    "Неотложная помощь, реанимация и анестезиология"
+  ],
+  "type": "Диагностика и лечение",
+  "patients": [
+    "Беременные"
+  ],
+  "keywords": "эктопическая беременность, ХГЧ",
+  "title_en": "Ectopic pregnancy diagnosis and management algorithm",
+  "image": "/images/s088.webp"
+}

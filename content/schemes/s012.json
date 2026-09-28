@@ -1,0 +1,14 @@
+{
+  "title": "Диагностика острой боли в пояснице у взрослых",
+  "section": "Травматология и ортопедия",
+  "extra_sections": [
+    "Неврология"
+  ],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "люмбалгия, боль в спине",
+  "title_en": "Acute low back pain in adults diagnosis algorithm",
+  "image": "/images/s012.webp"
+}

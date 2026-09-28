@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика острого респираторного дистресс-синдрома",
+  "section": "Пульмонология",
+  "extra_sections": [
+    "Неотложная помощь, реанимация и анестезиология"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "ОРДС, ARDS",
+  "title_en": "ARDS diagnosis algorithm",
+  "image": "/images/s001.webp"
+}

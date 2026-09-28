@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика перегрузки кровообращения при трансфузии и острого повреждения лёгких при трансфузии",
+  "section": "Гематология",
+  "extra_sections": [
+    "Неотложная помощь, реанимация и анестезиология"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "TACO, TRALI, гемотрансфузия",
+  "title_en": "TACO versus TRALI diagnosis algorithm",
+  "image": "/images/s342.webp"
+}

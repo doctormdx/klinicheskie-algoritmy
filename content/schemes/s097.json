@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика и сортировка детей с эритроцитозом",
+  "section": "Гематология",
+  "extra_sections": [],
+  "type": "Диагностика",
+  "patients": [
+    "Дети и подростки"
+  ],
+  "keywords": "гематокрит, JAK2",
+  "title_en": "Erythrocytosis diagnosis and triage in children algorithm",
+  "image": "/images/s097.webp"
+}

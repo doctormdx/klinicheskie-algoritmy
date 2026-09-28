@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика хронического менингита",
+  "section": "Неврология",
+  "extra_sections": [
+    "Инфекционные болезни и вакцинация"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "люмбальная пункция, ликвор",
+  "title_en": "Chronic meningitis diagnosis algorithm",
+  "image": "/images/s057.webp"
+}

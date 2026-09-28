@@ -1,0 +1,14 @@
+{
+  "title": "Дифференциальная диагностика перипартальной кардиомиопатии",
+  "section": "Кардиология и сосуды",
+  "extra_sections": [
+    "Акушерство и гинекология"
+  ],
+  "type": "Диагностика",
+  "patients": [
+    "Беременные"
+  ],
+  "keywords": "КМП, ГКМП, ДКМП, ПКМП, послеродовая кардиомиопатия",
+  "title_en": "Peripartum cardiomyopathy differential diagnosis algorithm",
+  "image": "/images/s280.webp"
+}

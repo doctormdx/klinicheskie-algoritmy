@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика кардиомиопатии у взрослых",
+  "section": "Кардиология и сосуды",
+  "extra_sections": [],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "КМП, ГКМП, ДКМП",
+  "title_en": "Cardiomyopathy in adults diagnosis algorithm",
+  "image": "/images/s049.webp"
+}

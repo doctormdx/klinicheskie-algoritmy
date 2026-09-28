@@ -1,0 +1,57 @@
+# Автопубликация: после каждого изменения (в том числе из админки)
+# сайт собирается и загружается в бакет Яндекс Облака. Занимает 1–2 минуты.
+name: Публикация сайта
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установка
+        run: npm ci
+
+      - name: Сборка сайта
+        run: npm run build
+
+      - name: Загрузка в Яндекс Облако
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ru-central1
+          # новые версии AWS CLI без этих двух строк не могут загружать файлы в Object Storage
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          BUCKET: ${{ vars.YC_BUCKET }}
+        run: |
+          S3="aws --endpoint-url=https://storage.yandexcloud.net s3"
+          LONG="public,max-age=31536000,immutable"
+          # Текстовые файлы сжимаем заранее (gzip): страницы весят в 4–5 раз меньше
+          find dist -type f \( -name '*.html' -o -name '*.js' -o -name '*.json' -o -name '*.xml' \
+            -o -name '*.txt' -o -name '*.yml' -o -name '*.svg' \) -exec gzip -9 -n {} \; \
+            -exec sh -c 'mv "$1.gz" "$1"' _ {} \;
+          # Картинки, скрипты и шрифты с хэшем в имени — браузер кэширует их надолго
+          $S3 sync dist/img "s3://$BUCKET/img" --size-only --content-type image/webp --cache-control "$LONG"
+          $S3 sync dist/assets "s3://$BUCKET/assets" --size-only --content-encoding gzip --cache-control "$LONG"
+          if [ -d dist/admin/fonts ]; then
+            $S3 sync dist/admin/fonts "s3://$BUCKET/admin/fonts" --size-only --content-type font/woff2 --cache-control "$LONG"
+          fi
+          # Страницы — короткий кэш, чтобы изменения появлялись сразу; удалённые схемы убираются
+          $S3 sync dist "s3://$BUCKET" --exclude "img/*" --exclude "assets/*" --exclude "admin/fonts/*" \
+            --exclude "admin/config.yml" --content-encoding gzip --cache-control "public,max-age=300" --delete
+          $S3 cp dist/admin/config.yml "s3://$BUCKET/admin/config.yml" --content-encoding gzip \
+            --content-type "text/yaml; charset=utf-8" --cache-control "no-cache"

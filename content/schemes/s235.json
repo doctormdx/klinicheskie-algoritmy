@@ -1,0 +1,14 @@
+{
+  "title": "Диагностика и лечение болезни Кавасаки",
+  "section": "Ревматология",
+  "extra_sections": [
+    "Кардиология и сосуды"
+  ],
+  "type": "Диагностика и лечение",
+  "patients": [
+    "Дети и подростки"
+  ],
+  "keywords": "слизисто-кожный лимфонодулярный синдром",
+  "title_en": "Kawasaki disease diagnosis and management algorithm",
+  "image": "/images/s235.webp"
+}

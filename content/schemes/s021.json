@@ -1,0 +1,14 @@
+{
+  "title": "Респираторная поддержка при остром респираторном дистресс-синдроме у взрослых",
+  "section": "Неотложная помощь, реанимация и анестезиология",
+  "extra_sections": [
+    "Пульмонология"
+  ],
+  "type": "Лечение и тактика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "ARDS",
+  "title_en": "Adult respiratory distress syndrome (ARDS) ventilator management algorithm",
+  "image": "/images/s021.webp"
+}

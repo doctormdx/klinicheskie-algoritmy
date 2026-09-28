@@ -1,0 +1,14 @@
+{
+  "title": "Лечение гипертензии у взрослых с хронической болезнью почек",
+  "section": "Кардиология и сосуды",
+  "extra_sections": [
+    "Нефрология"
+  ],
+  "type": "Лечение и тактика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "АГ, гипертония, давление, ХБП, CKD, СКФ",
+  "title_en": "Hypertension management in adults with chronic kidney disease algorithm",
+  "image": "/images/s212.webp"
+}

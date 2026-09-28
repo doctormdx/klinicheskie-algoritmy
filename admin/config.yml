@@ -1,0 +1,153 @@
+# Настройки админки (Sveltia CMS). Открывается по адресу https://ваш-сайт/admin/
+backend:
+  name: github
+  repo: GITHUB_USER/GITHUB_REPO   # подставляется автоматически при сборке на GitHub
+  branch: main
+  auth_methods: [token]            # вход по персональному токену GitHub
+  commit_messages:
+    create: 'Добавлено: {{collection}} «{{slug}}»'
+    update: 'Изменено: {{collection}} «{{slug}}»'
+    delete: 'Удалено: {{collection}} «{{slug}}»'
+    uploadMedia: 'Загружен файл {{path}}'
+    deleteMedia: 'Удалён файл {{path}}'
+
+site_url: https://example.ru
+media_folder: content/images
+public_folder: /images
+media_libraries:
+  default:
+    config:
+      max_file_size: 20000000
+
+collections:
+  - name: schemes
+    label: Схемы
+    label_singular: схему
+    description: 'Каждая схема — отдельная страница сайта. После сохранения сайт обновится через 1–2 минуты.'
+    folder: content/schemes
+    format: json
+    extension: json
+    create: true
+    delete: true
+    identifier_field: title
+    slug:
+      template: '{{uuid_shorter}}'
+      editable: false
+    summary: '{{title}}'
+    preview_path: 's/{{slug}}/'
+    thumbnail: image
+    sortable_fields:
+      fields: [title, section, type]
+      default:
+        field: title
+        direction: ascending
+    view_groups:
+      - label: Раздел
+        field: section
+      - label: Тип
+        field: type
+    fields:
+      - label: Название
+        name: title
+        widget: string
+        hint: 'Так схема будет называться на сайте'
+      - label: Схема (картинка)
+        name: image
+        widget: image
+        hint: 'PNG, JPG или WebP. При публикации картинка автоматически сжимается для быстрой загрузки.'
+      - label: Раздел
+        name: section
+        widget: relation
+        collection: sections
+        value_field: name
+        search_fields: [name]
+        display_fields: [name]
+      - label: Дополнительные разделы
+        name: extra_sections
+        widget: relation
+        collection: sections
+        value_field: name
+        search_fields: [name]
+        display_fields: [name]
+        multiple: true
+        required: false
+        hint: 'Если схема относится сразу к нескольким разделам'
+      - label: Тип
+        name: type
+        widget: select
+        options: [Диагностика, Лечение и тактика, Диагностика и лечение, Профилактика и скрининг]
+      - label: Пациенты
+        name: patients
+        widget: select
+        multiple: true
+        required: false
+        options: [Взрослые, Дети и подростки, Новорождённые и младенцы, Беременные]
+        hint: 'Оставьте пустым, если схема подходит для всех'
+      - label: Ключевые слова и сокращения
+        name: keywords
+        widget: string
+        required: false
+        hint: 'Через запятую, например: ОРДС, ARDS. По этим словам схему найдут в поиске'
+      - label: Оригинальное название (англ.)
+        name: title_en
+        widget: string
+        required: false
+
+  - name: sections
+    label: Разделы
+    label_singular: раздел
+    folder: content/sections
+    format: json
+    extension: json
+    create: true
+    delete: true
+    identifier_field: name
+    slug:
+      template: '{{uuid_shorter}}'
+      editable: false
+    summary: '{{name}}'
+    sortable_fields:
+      fields: [order, name]
+      default:
+        field: order
+        direction: ascending
+    fields:
+      - label: Название раздела
+        name: name
+        widget: string
+      - label: Порядок на главной
+        name: order
+        widget: number
+        value_type: int
+        required: false
+        hint: 'Чем меньше число, тем выше раздел на главной странице'
+
+  - name: settings
+    label: Настройки сайта
+    files:
+      - name: settings
+        label: Настройки
+        file: content/settings.json
+        format: json
+        fields:
+          - label: Название сайта
+            name: site_title
+            widget: string
+          - label: Описание для поисковиков
+            name: site_description
+            widget: text
+          - label: Адрес сайта
+            name: site_url
+            widget: string
+            required: false
+            hint: 'Например, https://algoritmy-vracham.ru — без слеша в конце'
+          - label: Номер счётчика Яндекс Метрики
+            name: metrika_id
+            widget: string
+            required: false
+            pattern: ['^[0-9]*$', 'Только цифры']
+            hint: 'Цифры из кабинета Метрики, например 98765432'
+          - label: Текст внизу страниц
+            name: footer_text
+            widget: string
+            required: false

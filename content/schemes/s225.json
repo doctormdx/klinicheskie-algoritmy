@@ -1,0 +1,14 @@
+{
+  "title": "Стационарное лечение внебольничной пневмонии у взрослых",
+  "section": "Пульмонология",
+  "extra_sections": [
+    "Инфекционные болезни и вакцинация"
+  ],
+  "type": "Лечение и тактика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "ВП, пневмония, антибиотики",
+  "title_en": "Inpatient adult community-acquired pneumonia management algorithm",
+  "image": "/images/s225.webp"
+}

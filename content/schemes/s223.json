@@ -1,0 +1,14 @@
+{
+  "title": "Начальное лечение сепсиса у взрослых",
+  "section": "Неотложная помощь, реанимация и анестезиология",
+  "extra_sections": [
+    "Инфекционные болезни и вакцинация"
+  ],
+  "type": "Лечение и тактика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "септический шок, антибиотики",
+  "title_en": "Initial management of sepsis in adults algorithm",
+  "image": "/images/s223.webp"
+}

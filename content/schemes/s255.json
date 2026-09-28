@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика рассеянного склероза у взрослых",
+  "section": "Неврология",
+  "extra_sections": [],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "РС, МРТ, демиелинизация",
+  "title_en": "Multiple sclerosis in adults diagnosis algorithm",
+  "image": "/images/s255.webp"
+}

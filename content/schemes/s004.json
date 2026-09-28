@@ -1,0 +1,14 @@
+{
+  "title": "Первичная клиническая диагностика острой боли в животе у взрослых",
+  "section": "Гастроэнтерология и гепатология",
+  "extra_sections": [
+    "Хирургия"
+  ],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "абдоминальная боль, острый живот",
+  "title_en": "Acute abdominal pain in adults initial clinical diagnosis algorithm",
+  "image": "/images/s004.webp"
+}

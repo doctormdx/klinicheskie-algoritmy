@@ -1,0 +1,12 @@
+{
+  "title": "Оценка сердцебиения у взрослых",
+  "section": "Кардиология и сосуды",
+  "extra_sections": [],
+  "type": "Диагностика",
+  "patients": [
+    "Взрослые"
+  ],
+  "keywords": "аритмия, Холтер",
+  "title_en": "Palpitation evaluation in adults algorithm",
+  "image": "/images/s277.webp"
+}

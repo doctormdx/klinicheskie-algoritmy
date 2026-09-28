@@ -1,0 +1,12 @@
+{
+  "title": "Диагностика лёгочной гипертензии",
+  "section": "Пульмонология",
+  "extra_sections": [
+    "Кардиология и сосуды"
+  ],
+  "type": "Диагностика",
+  "patients": [],
+  "keywords": "гипертония, давление, ЛГ, эхокардиография, катетеризация правых отделов",
+  "title_en": "Pulmonary hypertension diagnosis algorithm",
+  "image": "/images/s305.webp"
+}
