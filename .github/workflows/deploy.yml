@@ -62,14 +62,22 @@ jobs:
           find dist -type f \( -name '*.html' -o -name '*.js' -o -name '*.json' -o -name '*.xml' \
             -o -name '*.txt' -o -name '*.yml' -o -name '*.svg' \) -exec gzip -9 -n {} \; \
             -exec sh -c 'mv "$1.gz" "$1"' _ {} \;
-          # Картинки, скрипты и шрифты с хэшем в имени — браузер кэширует их надолго
-          $S3 sync dist/img "s3://$BUCKET/img" --size-only --content-type image/webp --cache-control "$LONG"
-          $S3 sync dist/assets "s3://$BUCKET/assets" --size-only --content-encoding gzip --cache-control "$LONG"
-          if [ -d dist/admin/fonts ]; then
-            $S3 sync dist/admin/fonts "s3://$BUCKET/admin/fonts" --size-only --content-type font/woff2 --cache-control "$LONG"
-          fi
-          # Страницы — короткий кэш, чтобы изменения появлялись сразу; удалённые схемы убираются
-          $S3 sync dist "s3://$BUCKET" --exclude "img/*" --exclude "assets/*" --exclude "admin/fonts/*" \
-            --exclude "admin/config.yml" --content-encoding gzip --cache-control "public,max-age=300" --delete
-          $S3 cp dist/admin/config.yml "s3://$BUCKET/admin/config.yml" --content-encoding gzip \
-            --content-type "text/yaml; charset=utf-8" --cache-control "no-cache"
+          upload() {
+            B="$1"
+            # Картинки, скрипты и шрифты с хэшем в имени — браузер кэширует их надолго
+            $S3 sync dist/img "s3://$B/img" --size-only --content-type image/webp --cache-control "$LONG"
+            $S3 sync dist/assets "s3://$B/assets" --size-only --content-encoding gzip --cache-control "$LONG"
+            if [ -d dist/admin/fonts ]; then
+              $S3 sync dist/admin/fonts "s3://$B/admin/fonts" --size-only --content-type font/woff2 --cache-control "$LONG"
+            fi
+            # Страницы — короткий кэш, чтобы изменения появлялись сразу; удалённые схемы убираются
+            $S3 sync dist "s3://$B" --exclude "img/*" --exclude "assets/*" --exclude "admin/fonts/*" \
+              --exclude "admin/config.yml" --content-encoding gzip --cache-control "public,max-age=300" --delete
+            $S3 cp dist/admin/config.yml "s3://$B/admin/config.yml" --content-encoding gzip \
+              --content-type "text/yaml; charset=utf-8" --cache-control "no-cache"
+          }
+          upload "$BUCKET"
+          # Временно, пока не заработал домен: та же копия сайта и админки по старому адресу
+          # algoritmy-vracham.website.yandexcloud.net. Когда домен откроется — убрать эти строки.
+          MIRROR=algoritmy-vracham
+          if [ "$MIRROR" != "$BUCKET" ]; then upload "$MIRROR"; fi
