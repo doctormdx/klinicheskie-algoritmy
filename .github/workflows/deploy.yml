@@ -77,7 +77,3 @@ jobs:
               --content-type "text/yaml; charset=utf-8" --cache-control "no-cache"
           }
           upload "$BUCKET"
-          # Временно, пока не заработал домен: та же копия сайта и админки по старому адресу
-          # algoritmy-vracham.website.yandexcloud.net. Когда домен откроется — убрать эти строки.
-          MIRROR=algoritmy-vracham
-          if [ "$MIRROR" != "$BUCKET" ]; then upload "$MIRROR"; fi
