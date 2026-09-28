@@ -15,5 +15,8 @@
   "type": "module",
   "engines": {
     "node": ">=20.11"
+  },
+  "dependencies": {
+    "marked": "^16.4.2"
   }
 }

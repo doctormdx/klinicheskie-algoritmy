@@ -93,6 +93,120 @@ collections:
         widget: string
         required: false
 
+  - name: news
+    label: Новости
+    label_singular: новость
+    description: 'Каждая новость — отдельная страница в разделе «Новости». После сохранения сайт обновится через 1–2 минуты.'
+    folder: content/news
+    format: json
+    extension: json
+    create: true
+    delete: true
+    identifier_field: title
+    slug:
+      template: '{{year}}-{{month}}-{{day}}-{{uuid_shorter}}'
+      editable: false
+    summary: '{{date}} — {{title}}'
+    preview_path: 'news/{{slug}}/'
+    thumbnail: image
+    sortable_fields:
+      fields: [date, title, section, topic]
+      default:
+        field: date
+        direction: descending
+    view_groups:
+      - label: Специальность
+        field: section
+      - label: Тематика
+        field: topic
+    fields:
+      - label: Заголовок
+        name: title
+        widget: string
+      - label: Дата
+        name: date
+        widget: datetime
+        type: date
+        default: '{{now}}'
+        hint: 'Ставится автоматически — сегодняшняя. Новости на сайте идут от новых к старым'
+      - label: Специальность
+        name: section
+        widget: relation
+        collection: sections
+        value_field: name
+        search_fields: [name]
+        display_fields: [name]
+      - label: Дополнительные специальности
+        name: extra_sections
+        widget: relation
+        collection: sections
+        value_field: name
+        search_fields: [name]
+        display_fields: [name]
+        multiple: true
+        required: false
+        hint: 'Если новость важна сразу для нескольких специальностей'
+      - label: Тематика
+        name: topic
+        widget: relation
+        collection: topics
+        value_field: name
+        search_fields: [name]
+        display_fields: [name]
+      - label: Краткий анонс
+        name: summary
+        widget: text
+        hint: '1–2 предложения: главное в новости. Показывается в списке новостей'
+      - label: Текст новости
+        name: body
+        widget: markdown
+        required: false
+        editor_components: [image]
+      - label: Ссылка на первоисточник
+        name: source_url
+        widget: string
+        type: url
+        required: false
+      - label: Название источника
+        name: source_name
+        widget: string
+        required: false
+        hint: 'Например: NEJM, Минздрав России, EAU'
+      - label: Картинка
+        name: image
+        widget: image
+        required: false
+        hint: 'Необязательно. Показывается вверху страницы новости'
+
+  - name: topics
+    label: Тематики новостей
+    label_singular: тематику
+    folder: content/topics
+    format: json
+    extension: json
+    create: true
+    delete: true
+    identifier_field: name
+    slug:
+      template: '{{uuid_shorter}}'
+      editable: false
+    summary: '{{name}}'
+    sortable_fields:
+      fields: [order, name]
+      default:
+        field: order
+        direction: ascending
+    fields:
+      - label: Название тематики
+        name: name
+        widget: string
+      - label: Порядок в фильтре
+        name: order
+        widget: number
+        value_type: int
+        required: false
+        hint: 'Чем меньше число, тем левее кнопка тематики в фильтре новостей'
+
   - name: sections
     label: Разделы
     label_singular: раздел

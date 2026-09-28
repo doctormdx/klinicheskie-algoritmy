@@ -49,7 +49,10 @@ ${canonical}
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="/">${esc(s.site_title)}</a>
-    ${searchLink ? `<a class="top-search" href="/#q" aria-label="Поиск по схемам">${ICON_SEARCH}</a>` : ''}
+    <nav class="top-nav" aria-label="Разделы сайта">
+      ${ctx.hasNews ? `<a class="top-link" href="/news/"${page.startsWith('news') ? ' aria-current="page"' : ''}>Новости</a>` : ''}
+      ${searchLink ? `<a class="top-search" href="/#q" aria-label="Поиск по схемам">${ICON_SEARCH}</a>` : ''}
+    </nav>
   </div>
 </header>
 <main class="wrap">
@@ -95,6 +98,7 @@ function row(s, withSection = false) {
 
 // Дата добавления: «3 октября», для прошлых лет — «3 октября 2025»
 function fmtDate(ymd) {
+  if (!ymd) return '';
   const d = new Date(`${ymd}T12:00:00+03:00`);
   const sameYear = ymd.slice(0, 4) === new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Moscow' }).slice(0, 4);
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }), timeZone: 'Europe/Moscow' })
@@ -155,7 +159,14 @@ ${filters()}
 <ul class="list">
   ${sec.schemes.map((s) => row(s)).join('\n  ')}
 </ul>
-<p class="empty" hidden>Ничего не найдено. <button type="button" class="reset">Сбросить фильтры</button></p>`;
+<p class="empty" hidden>Ничего не найдено. <button type="button" class="reset">Сбросить фильтры</button></p>
+${sec.news?.length ? `<section class="section-news">
+  <h2>Новости: ${esc(sec.name)}</h2>
+  <ul class="list">
+    ${sec.news.slice(0, 3).map((n) => newsRow(n, { spec: false, summary: false })).join('\n    ')}
+  </ul>
+  <p class="all-link"><a href="/news/?s=${sec.slug}">Все новости специальности (${sec.news.length})</a></p>
+</section>` : ''}`;
   return layout(ctx, {
     title: sec.name,
     description: `${sec.name}: ${schemesCount(sec.schemes.length)} — клинические алгоритмы диагностики и лечения.`,
@@ -235,6 +246,75 @@ ${list.length ? `<p class="lead">${esc(schemesCount(list.length))}, сначал
     description: 'Недавно добавленные клинические алгоритмы на русском языке.',
     path: '/new/',
     page: 'new',
+    body,
+  });
+}
+
+// ---------- Новости ----------
+
+function newsRow(n, { spec = true, summary = true } = {}) {
+  const meta = [spec ? n.section.name : '', n.topic.name, fmtDate(n.date)].filter(Boolean).join(' · ');
+  return `<li data-s="${n.specs.map((x) => x.slug).join(' ')}" data-t="${n.topic.slug}"><a href="${n.url}"><span class="t">${esc(n.title)}</span><span class="m">${esc(meta)}</span>${summary && n.summary ? `<span class="sum">${esc(n.summary)}</span>` : ''}</a></li>`;
+}
+
+export function newsList(ctx, news, specs, topics) {
+  const body = `
+<nav class="crumbs" aria-label="Навигация"><a href="/">Главная</a></nav>
+<h1>Новости</h1>
+${news.length ? `<div class="news-filters">
+  <label class="vh" for="news-s">Специальность</label>
+  <select id="news-s" class="select">
+    <option value="">Все специальности</option>
+    ${specs.map((s) => `<option value="${s.slug}">${esc(s.name)} (${s.news.length})</option>`).join('\n    ')}
+  </select>
+  <div class="chips" role="group" aria-label="Тематика" data-group="t">
+    ${topics.map((t) => `<button type="button" data-v="${t.slug}" aria-pressed="false">${esc(t.name)}</button>`).join('\n    ')}
+  </div>
+</div>
+<p class="count" hidden></p>
+<ul class="list news-list">
+  ${news.map((n) => newsRow(n)).join('\n  ')}
+</ul>
+<p class="empty" hidden>По этим условиям новостей нет. <button type="button" class="reset">Сбросить фильтры</button></p>`
+    : '<p class="lead">Новостей пока нет.</p>'}`;
+  return layout(ctx, {
+    title: 'Новости',
+    description: 'Медицинские новости для врачей по специальностям: клинические рекомендации, исследования, лекарства, нормативные документы.',
+    path: '/news/',
+    page: 'news',
+    body,
+  });
+}
+
+export function newsItem(ctx, n) {
+  const main = n.section;
+  const source = n.source_url
+    ? `<p class="source">Источник: <a href="${esc(n.source_url)}" rel="noopener nofollow">${esc(n.source_name || n.source_url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a></p>`
+    : n.source_name ? `<p class="source">Источник: ${esc(n.source_name)}</p>` : '';
+  const body = `
+<nav class="crumbs" aria-label="Навигация"><a href="/">Главная</a><span aria-hidden="true">›</span><a href="/news/">Новости</a></nav>
+<article class="news">
+  <h1 class="news-title">${esc(n.title)}</h1>
+  <p class="news-meta">${n.date ? `<time datetime="${n.date}">${esc(fmtDate(n.date))}</time> · ` : ''}<a href="/news/?t=${n.topic.slug}">${esc(n.topic.name)}</a></p>
+  <p class="tags">${n.specs.map((s) => `<a href="/news/?s=${s.slug}">${esc(s.name)}</a>`).join('')}</p>
+  ${n.img ? `<figure class="news-cover"><img src="${n.img.src}" width="${n.img.width}" height="${n.img.height}" alt="" fetchpriority="high" decoding="async"></figure>` : ''}
+  ${n.summary ? `<p class="news-lead">${esc(n.summary)}</p>` : ''}
+  <div class="prose">${n.html}</div>
+  ${source}
+</article>
+${n.related.length || ctx.hasPage(main) ? `<section class="related">
+  <h2>Схемы по теме</h2>
+  ${n.related.length ? `<ul class="list">
+    ${n.related.map((x) => row(x, true)).join('\n    ')}
+  </ul>` : ''}
+  ${ctx.hasPage(main) ? `<p class="all-link"><a href="/r/${main.slug}/">Все схемы раздела «${esc(main.name)}» (${main.schemes.length})</a></p>` : ''}
+</section>` : ''}
+<p class="all-link"><a href="/news/">Все новости</a></p>`;
+  return layout(ctx, {
+    title: n.title,
+    description: n.summary || `${n.title}. ${n.section.name}. Новости для врачей.`,
+    path: n.url,
+    page: 'news-item',
     body,
   });
 }

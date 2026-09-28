@@ -255,6 +255,46 @@
     update();
   }
 
+  // ---------- Новости: фильтр по специальности и тематике ----------
+  function initNews() {
+    var sel = document.getElementById('news-s');
+    if (!sel) return; // новостей пока нет
+    var items = [].slice.call(document.querySelectorAll('.news-list > li'));
+    var countEl = document.querySelector('main > .count');
+    var empty = document.querySelector('.empty');
+    var p = new URLSearchParams(location.search);
+    var state = { s: p.get('s') || '', t: p.get('t') || '' };
+    sel.value = state.s;
+    if (sel.value !== state.s) state.s = '';
+    function update() {
+      var n = 0;
+      items.forEach(function (li) {
+        var ok = (!state.s || (' ' + li.getAttribute('data-s') + ' ').indexOf(' ' + state.s + ' ') >= 0) &&
+          (!state.t || li.getAttribute('data-t') === state.t);
+        li.hidden = !ok;
+        if (ok) n++;
+      });
+      countEl.hidden = !(state.s || state.t) || !n;
+      countEl.textContent = 'Найдено: ' + n;
+      empty.hidden = n > 0;
+      var q = new URLSearchParams();
+      if (state.s) q.set('s', state.s);
+      if (state.t) q.set('t', state.t);
+      var qs = q.toString();
+      history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+    }
+    sel.addEventListener('change', function () { state.s = sel.value; update(); });
+    var sync = setupChips(state, update);
+    document.querySelector('.reset').addEventListener('click', function () {
+      state.s = state.t = '';
+      sel.value = '';
+      sync();
+      update();
+    });
+    update();
+  }
+
   if (page === 'home') initHome();
   else if (page === 'section') initSection();
+  else if (page === 'news') initNews();
 })();
