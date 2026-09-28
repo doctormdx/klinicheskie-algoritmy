@@ -38,7 +38,7 @@ jobs:
           AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
           BUCKET: ${{ vars.YC_BUCKET }}
         run: |
-          SHOW="${BUCKET//$'\n'/ ⏎ }"
+          SHOW=$(printf '%s' "$BUCKET" | tr '\r\n\t' '   ')
           echo "::notice title=Бакет::[$SHOW]"
           case "$BUCKET" in
             ""|*[[:space:]]*)
