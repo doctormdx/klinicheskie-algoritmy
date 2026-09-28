@@ -14,9 +14,7 @@
 
 ### 1. GitHub: где хранится контент
 
-1. Зарегистрируйтесь на [github.com](https://github.com).
-2. Загрузите эту папку на GitHub. Проще всего через [GitHub Desktop](https://desktop.github.com): *File → Add local repository* → выберите папку → *create a repository* → *Create repository* → *Publish repository* (оставьте галочку *Keep this code private*).
-3. Добавьте автопубликацию. На странице репозитория откройте **Actions → set up a workflow yourself**, удалите текст-заготовку, вставьте всё содержимое файла `deploy.yml` из этой папки и нажмите **Commit changes**.
+Готово: проект загружен в приватный репозиторий [doctormdx/klinicheskie-algoritmy](https://github.com/doctormdx/klinicheskie-algoritmy), автопубликация уже подключена.
 
 ### 2. Яндекс Облако: где работает сайт
 
