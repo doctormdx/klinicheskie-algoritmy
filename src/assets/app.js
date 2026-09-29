@@ -294,6 +294,97 @@
     update();
   }
 
+  // ---------- Пуш-уведомления о новостях по специальностям ----------
+  // Ключ сервера и хранение подписок — у функции news-bot в Яндекс Облаке.
+  // Запросы идут как text/plain, чтобы браузер не делал предварительный CORS-запрос.
+  function initPush() {
+    var form = document.querySelector('.push-form');
+    var open = document.querySelector('.push-open');
+    if (!form || !open) return;
+    var api = form.getAttribute('data-api');
+    var status = form.querySelector('.push-status');
+    var off = form.querySelector('.push-off');
+    var boxes = [].slice.call(form.querySelectorAll('input[name=s]'));
+    var supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    function say(t) { status.textContent = t; }
+    function call(action, payload) {
+      return fetch(api + (api.indexOf('?') < 0 ? '?' : '&') + 'a=' + action, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload || {})
+      }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+    }
+    function b64ToBytes(b64) {
+      var s = atob((b64 + '==='.slice((b64.length + 3) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+      var out = new Uint8Array(s.length);
+      for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+      return out;
+    }
+    function registration() {
+      return navigator.serviceWorker.register('/sw.js').then(function () { return navigator.serviceWorker.ready; });
+    }
+    open.addEventListener('click', function () {
+      form.hidden = !form.hidden;
+      if (form.hidden) return;
+      // Если в списке новостей выбрана специальность — сразу отмечаем её
+      var cur = document.getElementById('news-s');
+      if (cur && cur.value && !boxes.some(function (b) { return b.checked; })) {
+        boxes.forEach(function (b) { if (b.value === cur.value) b.checked = true; });
+      }
+      if (!supported) {
+        say(/iPhone|iPad/.test(navigator.userAgent)
+          ? 'На iPhone уведомления работают, если добавить сайт на экран «Домой» (Поделиться → На экран «Домой») и открыть его оттуда.'
+          : 'Этот браузер не поддерживает уведомления. Подпишитесь через бота в Telegram.');
+        return;
+      }
+      registration().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) {
+        if (!sub) return;
+        return call('push-get', { endpoint: sub.endpoint }).then(function (r) {
+          (r.specs || []).forEach(function (v) {
+            boxes.forEach(function (b) { if (b.value === v) b.checked = true; });
+          });
+          off.hidden = false;
+          say('Вы подписаны. Можно изменить специальности и нажать «Подписаться» ещё раз.');
+        });
+      }).catch(function () {});
+    });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!supported) return;
+      var specs = boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.value; });
+      if (!specs.length) { say('Отметьте хотя бы одну специальность.'); return; }
+      say('Подписываем…');
+      Notification.requestPermission().then(function (perm) {
+        if (perm !== 'granted') throw new Error('denied');
+        return Promise.all([registration(), call('vapid')]);
+      }).then(function (res) {
+        var reg = res[0], key = res[1].key;
+        return reg.pushManager.getSubscription().then(function (sub) {
+          return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(key) });
+        });
+      }).then(function (sub) {
+        return call('push-sub', { sub: sub.toJSON(), specs: specs });
+      }).then(function () {
+        off.hidden = false;
+        say('Готово: уведомления включены (' + specs.length + ' ' + (specs.length === 1 ? 'специальность' : specs.length < 5 ? 'специальности' : 'специальностей') + ').');
+        if (window.ym && document.body.getAttribute('data-ym')) window.ym(+document.body.getAttribute('data-ym'), 'reachGoal', 'push_subscribe');
+      }).catch(function (err) {
+        say(err && err.message === 'denied'
+          ? 'Уведомления запрещены в настройках браузера для этого сайта. Разрешите их и попробуйте снова.'
+          : 'Не получилось подписаться. Попробуйте позже или подпишитесь через бота в Telegram.');
+      });
+    });
+    off.addEventListener('click', function () {
+      registration().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) {
+        if (!sub) return;
+        return call('push-unsub', { endpoint: sub.endpoint }).then(function () { return sub.unsubscribe(); });
+      }).then(function () {
+        boxes.forEach(function (b) { b.checked = false; });
+        off.hidden = true;
+        say('Уведомления отключены.');
+      }).catch(function () { say('Не получилось отписаться. Попробуйте позже.'); });
+    });
+  }
+
+  if (page === 'news') initPush();
   if (page === 'home') initHome();
   else if (page === 'section') initSection();
   else if (page === 'news') initNews();

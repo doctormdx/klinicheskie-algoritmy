@@ -1,0 +1,111 @@
+# Сбор новостей DynaMed: вход под учётной записью, новые алерты → перевод и разметка моделью →
+# черновики в content/news/ → администратору в Telegram приходят кнопки «Опубликовать / Отклонить».
+# Запускается каждый день в 9:17 и 18:17 по Москве; вручную — Actions → «Сбор новостей» → Run workflow.
+name: Сбор новостей
+
+on:
+  schedule:
+    - cron: '17 6,15 * * *'   # UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Только проверить вход и показать новые алерты (без перевода и записи)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: news-collect
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Проверка настроек
+        id: check
+        env:
+          LOGIN: ${{ secrets.DYNAMED_LOGIN }}
+          KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -z "$LOGIN" ] || [ -z "$KEY" ]; then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "::error title=Не хватает настроек::Нужны секреты DYNAMED_LOGIN, DYNAMED_PASSWORD и LLM_API_KEY"; exit 1
+            fi
+            echo "::notice title=Сбор новостей не настроен::Нет секретов DYNAMED_LOGIN или LLM_API_KEY — пропускаю"; exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/news/package-lock.json
+
+      - name: Установка
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          npm ci --prefix tools/news
+          npx --prefix tools/news playwright install --with-deps chromium
+
+      - name: Сбор и перевод
+        if: steps.check.outputs.ready == 'true'
+        env:
+          DYNAMED_LOGIN: ${{ secrets.DYNAMED_LOGIN }}
+          DYNAMED_PASSWORD: ${{ secrets.DYNAMED_PASSWORD }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          NEWS_MAX_PER_RUN: ${{ vars.NEWS_MAX_PER_RUN }}
+          NEWS_AUTO_PUBLISH: ${{ vars.NEWS_AUTO_PUBLISH }}
+        run: node tools/news/collect.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Снимок экрана при ошибке входа
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug
+          path: debug/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Сохранение в репозиторий
+        id: save
+        if: ${{ steps.check.outputs.ready == 'true' && !inputs.dry_run }}
+        run: |
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git add content/news data/news-seen.json
+          if git diff --cached --quiet; then
+            echo "Изменений нет"
+            exit 0
+          fi
+          N=$(git diff --cached --name-only --diff-filter=A -- content/news | wc -l)
+          git commit -m "Новости DynaMed: $N шт."
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && break
+            sleep 5
+          done
+          echo "pushed=$N" >> "$GITHUB_OUTPUT"
+
+      - name: Черновики — на проверку в Telegram
+        if: ${{ steps.save.outputs.pushed && vars.NEWS_AUTO_PUBLISH != 'true' }}
+        env:
+          NEWS_API_SECRET: ${{ secrets.NEWS_API_SECRET }}
+        run: node tools/news/call.mjs review
+
+      # При автопубликации сразу собираем сайт (коммит от имени Actions сам сборку не запускает)
+      - name: Публикация сайта
+        if: ${{ steps.save.outputs.pushed && vars.NEWS_AUTO_PUBLISH == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main

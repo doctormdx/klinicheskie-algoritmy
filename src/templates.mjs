@@ -257,10 +257,43 @@ function newsRow(n, { spec = true, summary = true } = {}) {
   return `<li data-s="${n.specs.map((x) => x.slug).join(' ')}" data-t="${n.topic.slug}"><a href="${n.url}"><span class="t">${esc(n.title)}</span><span class="m">${esc(meta)}</span>${summary && n.summary ? `<span class="sum">${esc(n.summary)}</span>` : ''}</a></li>`;
 }
 
+// Подписка на новости своих специальностей: бот в Telegram, канал, пуш-уведомления в браузере
+function subscribeBox(ctx) {
+  const s = ctx.settings;
+  const bot = String(s.telegram_bot || '').replace(/^@/, '').trim();
+  const channel = String(s.telegram_channel_url || '').trim();
+  const api = String(s.news_api_url || '').trim();
+  if (!bot && !channel && !api) return '';
+  const links = [
+    bot ? `<a class="btn" href="https://t.me/${esc(bot)}" rel="noopener">Бот в Telegram — по специальностям</a>` : '',
+    channel ? `<a class="btn btn-ghost" href="${esc(channel)}" rel="noopener">Канал в Telegram — все новости</a>` : '',
+    api ? `<button type="button" class="btn btn-ghost push-open">Уведомления в браузере</button>` : '',
+  ].filter(Boolean).join('\n    ');
+  const push = api ? `
+  <form class="push-form" data-api="${esc(api)}" hidden>
+    <p class="push-hint">Отметьте специальности — пришлём уведомление, когда выйдет новость по ним.</p>
+    <div class="push-specs">
+      ${ctx.allSpecs.map((x) => `<label><input type="checkbox" name="s" value="${x.slug}"> ${esc(x.name)}</label>`).join('\n      ')}
+    </div>
+    <div class="push-actions">
+      <button type="submit" class="btn">Подписаться</button>
+      <button type="button" class="btn btn-ghost push-off" hidden>Отписаться</button>
+    </div>
+    <p class="push-status" aria-live="polite"></p>
+  </form>` : '';
+  return `<section class="subscribe" aria-labelledby="sub-h">
+  <h2 id="sub-h">Новости вашей специальности</h2>
+  <div class="sub-links">
+    ${links}
+  </div>${push}
+</section>`;
+}
+
 export function newsList(ctx, news, specs, topics) {
   const body = `
 <nav class="crumbs" aria-label="Навигация"><a href="/">Главная</a></nav>
 <h1>Новости</h1>
+${subscribeBox(ctx)}
 ${news.length ? `<div class="news-filters">
   <label class="vh" for="news-s">Специальность</label>
   <select id="news-s" class="select">

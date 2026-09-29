@@ -193,6 +193,7 @@ async function loadNews(byName, sections, allSchemes) {
   for (const f of await listJson(path.join(CONTENT, 'news'))) {
     const n = await readJson(path.join(CONTENT, 'news', f));
     const slug = slugify(path.basename(f, '.json'));
+    if (n.status === 'draft') continue; // черновик: ждёт проверки, на сайте не показываем
     if (!n.title || !n.section || !n.topic) {
       console.warn(`  пропущена новость ${f}: нет заголовка, специальности или тематики`);
       continue;
@@ -227,6 +228,7 @@ async function loadNews(byName, sections, allSchemes) {
       source_url: (n.source_url || '').trim(),
       source_name: (n.source_name || '').trim(),
       image: n.image || '',
+      telegram: (n.telegram || '').trim(),
     };
 
     // Текст: Markdown → HTML, картинки из текста сжимаем так же, как схемы
@@ -371,7 +373,8 @@ async function main() {
   const css = await fs.readFile(path.join(ROOT, 'src', 'assets', 'style.css'), 'utf8');
   const ctx = {
     settings, css, appSrc: `/${appName}`, indexSrc: `/${indexName}`, total: ready.length, newDays: NEW_DAYS,
-    hasNews: news.length > 0,
+    hasNews: news.length > 0 || !!(settings.telegram_bot || settings.telegram_channel_url || settings.news_api_url),
+    allSpecs: sections.slice().sort((a, b) => a.order - b.order || collator.compare(a.name, b.name)),
     hasPage: (sec) => pageSections.has(sec), // у раздела есть своя страница со схемами
   };
 
@@ -383,6 +386,24 @@ async function main() {
   for (const sec of visibleSections) await write(`r/${sec.slug}/index.html`, T.section(ctx, sec));
   for (const s of ready) await write(`s/${s.slug}/index.html`, T.scheme(ctx, s));
   await write('404.html', T.notFound(ctx));
+
+  // Для бота и пуш-уведомлений: список специальностей и свежие новости.
+  // Бот берёт отсюда, что разослать подписчикам после публикации.
+  await write('specs.json', JSON.stringify(ctx.allSpecs.map((s) => ({ slug: s.slug, name: s.name }))));
+  await write('news.json', JSON.stringify(news.slice(0, 50).map((n) => ({
+    slug: n.slug,
+    url: n.url,
+    title: n.title,
+    date: n.date,
+    summary: n.summary,
+    telegram: n.telegram,
+    specs: n.specs.map((x) => x.slug),
+    spec_names: n.specs.map((x) => x.name),
+    topic: n.topic.name,
+    source_name: n.source_name,
+  }))));
+  const sw = await fs.readFile(path.join(ROOT, 'src', 'assets', 'sw.js'));
+  await write('sw.js', sw);
   await fs.copyFile(path.join(ROOT, 'src', 'assets', 'favicon.svg'), path.join(OUT, 'favicon.svg'));
 
   if (settings.site_url) {

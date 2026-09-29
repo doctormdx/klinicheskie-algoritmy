@@ -1,0 +1,10 @@
+{
+  "name": "news-bot",
+  "private": true,
+  "description": "Функция Яндекс Облака: Telegram-бот, модерация и рассылка новостей",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1142.0",
+    "web-push": "^3.6.7"
+  }
+}

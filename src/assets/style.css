@@ -110,3 +110,14 @@ mark{background:color-mix(in srgb,var(--primary) 18%,transparent);color:inherit;
 .section-news h2{font-size:17px}
 
 .foot{color:var(--muted);font-size:14px;padding:20px 0 calc(20px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.subscribe{margin:4px 0 18px;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.subscribe h2{font-size:17px;margin:0}
+.sub-links .btn{margin-top:10px}
+.sub-links .btn:first-child{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.push-hint{margin:14px 0 8px;color:var(--muted);font-size:15px}
+.push-specs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 12px}
+.push-specs label{display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:15px;cursor:pointer}
+.push-specs input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:var(--primary)}
+.push-status{margin:8px 0 0;font-size:15px;color:var(--muted)}
+.push-status:empty{display:none}
+.push-actions .btn[type=submit]{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}

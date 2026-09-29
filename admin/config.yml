@@ -114,12 +114,26 @@ collections:
       default:
         field: date
         direction: descending
+    view_filters:
+      - label: На проверке
+        field: status
+        pattern: draft
     view_groups:
+      - label: Статус
+        field: status
       - label: Специальность
         field: section
       - label: Тематика
         field: topic
     fields:
+      - label: Статус
+        name: status
+        widget: select
+        options:
+          - { label: 'Опубликовано', value: published }
+          - { label: 'Черновик — на проверке', value: draft }
+        default: published
+        hint: 'Черновики не видны на сайте. Новости, собранные автоматически, приходят черновиками: проверьте текст и поставьте «Опубликовано» (или нажмите «Опубликовать» в Telegram)'
       - label: Заголовок
         name: title
         widget: string
@@ -177,6 +191,17 @@ collections:
         widget: image
         required: false
         hint: 'Необязательно. Показывается вверху страницы новости'
+      - label: Текст поста для Telegram
+        name: telegram
+        widget: text
+        required: false
+        hint: 'Уходит в канал и подписчикам после публикации. Заголовок, хэштеги и ссылка на сайт добавятся сами. Если пусто — возьмётся краткий анонс'
+      - label: Оригинал (для сверки)
+        name: origin_url
+        widget: string
+        required: false
+        readonly: true
+        hint: 'Заполняется автоматически у собранных новостей. На сайте не показывается'
 
   - name: topics
     label: Тематики новостей
@@ -265,3 +290,18 @@ collections:
             name: footer_text
             widget: string
             required: false
+          - label: Канал в Telegram
+            name: telegram_channel_url
+            widget: string
+            required: false
+            hint: 'Ссылка на канал с новостями, например https://t.me/algoritmvracha. Показывается на странице новостей'
+          - label: Бот в Telegram
+            name: telegram_bot
+            widget: string
+            required: false
+            hint: 'Имя бота без @, например algoritmvracha_bot. Через бота врачи подписываются на новости своих специальностей'
+          - label: Адрес функции уведомлений
+            name: news_api_url
+            widget: string
+            required: false
+            hint: 'Адрес функции news-bot в Яндекс Облаке, например https://functions.yandexcloud.net/d4e… Нужен для пуш-уведомлений в браузере'

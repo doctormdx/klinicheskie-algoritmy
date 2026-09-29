@@ -77,3 +77,10 @@ jobs:
               --content-type "text/yaml; charset=utf-8" --cache-control "no-cache"
           }
           upload "$BUCKET"
+
+      # Новые опубликованные новости → канал, подписчики бота, пуш-уведомления в браузер
+      - name: Рассылка новостей
+        continue-on-error: true
+        env:
+          NEWS_API_SECRET: ${{ secrets.NEWS_API_SECRET }}
+        run: node tools/news/call.mjs notify

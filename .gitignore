@@ -1,3 +1,7 @@
 node_modules/
 dist/
 .DS_Store
+tools/news/node_modules/
+tools/news/.last-run.json
+functions/news-bot/node_modules/
+debug/

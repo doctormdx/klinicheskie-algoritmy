@@ -1,0 +1,119 @@
+# Установка и обновление функции news-bot в Яндекс Облаке (Telegram-бот, модерация, рассылка).
+# Запускается вручную (Actions → «Бот новостей» → Run workflow) и сам — при изменении кода функции.
+name: Бот новостей
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['functions/news-bot/**', '.github/workflows/news-bot.yml']
+
+concurrency:
+  group: news-bot
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FUNC: news-bot
+      DATA_BUCKET: ${{ vars.YC_DATA_BUCKET || 'algoritmvracha-news-data' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Проверка настроек
+        id: check
+        env:
+          YC_SA_KEY: ${{ secrets.YC_SA_KEY }}
+          BOT: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          SECRET: ${{ secrets.NEWS_API_SECRET }}
+          PAT: ${{ secrets.GH_PAT }}
+          FOLDER: ${{ vars.YC_FOLDER_ID }}
+        run: |
+          miss=""
+          [ -n "$YC_SA_KEY" ] || miss="$miss секрет YC_SA_KEY;"
+          [ -n "$BOT" ] || miss="$miss секрет TELEGRAM_BOT_TOKEN;"
+          [ -n "$SECRET" ] || miss="$miss секрет NEWS_API_SECRET;"
+          [ -n "$PAT" ] || miss="$miss секрет GH_PAT;"
+          [ -n "$FOLDER" ] || miss="$miss переменная YC_FOLDER_ID;"
+          if [ -n "$miss" ]; then
+            # при ручном запуске — ошибка с подсказкой, при обычном коммите — просто пропуск
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "::error title=Не хватает настроек::$miss"; exit 1; fi
+            echo "::notice title=Бот не настроен::$miss — пропускаю"; exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          case "$SECRET" in *,*|*" "*) echo "::error title=NEWS_API_SECRET::Код не должен содержать запятых и пробелов"; exit 1;; esac
+
+      - name: Установка yc
+        if: steps.check.outputs.ready == 'true'
+        env:
+          YC_SA_KEY: ${{ secrets.YC_SA_KEY }}
+        run: |
+          curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i "$HOME/yc" -n
+          echo "$HOME/yc/bin" >> "$GITHUB_PATH"
+          printf '%s' "$YC_SA_KEY" > "$RUNNER_TEMP/key.json"
+          "$HOME/yc/bin/yc" config set service-account-key "$RUNNER_TEMP/key.json"
+          "$HOME/yc/bin/yc" config set folder-id "${{ vars.YC_FOLDER_ID }}"
+
+      - name: Бакет для подписок (закрытый)
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          yc storage bucket get "$DATA_BUCKET" >/dev/null 2>&1 || yc storage bucket create --name "$DATA_BUCKET"
+
+      - name: Функция
+        if: steps.check.outputs.ready == 'true'
+        env:
+          BOT: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          SECRET: ${{ secrets.NEWS_API_SECRET }}
+          PAT: ${{ secrets.GH_PAT }}
+          S3_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
+          S3_SECRET: ${{ secrets.YC_SECRET_ACCESS_KEY }}
+          CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
+        run: |
+          SITE=$(node -p "(require('./content/settings.json').site_url || '').replace(/\/+$/, '')")
+          yc serverless function get --name "$FUNC" >/dev/null 2>&1 || yc serverless function create --name "$FUNC" --description "Бот и рассылка новостей $SITE"
+          yc serverless function allow-unauthenticated-invoke --name "$FUNC"
+          yc serverless function version create \
+            --function-name "$FUNC" \
+            --runtime nodejs22 \
+            --entrypoint index.handler \
+            --memory 256m \
+            --execution-timeout 300s \
+            --source-path functions/news-bot \
+            --environment "SITE_URL=$SITE,API_SECRET=$SECRET,BOT_TOKEN=$BOT,CHANNEL_ID=$CHANNEL,DATA_BUCKET=$DATA_BUCKET,S3_KEY_ID=$S3_KEY_ID,S3_SECRET=$S3_SECRET,GITHUB_TOKEN=$PAT,GITHUB_REPO=${{ github.repository }}" \
+            > /dev/null
+          ID=$(yc serverless function get --name "$FUNC" --format json | jq -r .id)
+          echo "URL=https://functions.yandexcloud.net/$ID" >> "$GITHUB_ENV"
+
+      - name: Подключение бота
+        if: steps.check.outputs.ready == 'true'
+        env:
+          SECRET: ${{ secrets.NEWS_API_SECRET }}
+        run: |
+          body=$(jq -nc --arg s "$SECRET" --arg u "$URL" '{secret:$s,url:$u}')
+          for i in 1 2 3 4 5; do
+            curl -fsS -X POST "$URL?a=setup" -H 'Content-Type: text/plain' --data "$body" && break
+            sleep 10
+          done
+          echo
+          echo "### Бот подключён" >> "$GITHUB_STEP_SUMMARY"
+          echo "Адрес функции: \`$URL\`" >> "$GITHUB_STEP_SUMMARY"
+
+      # Адрес функции нужен сайту (пуш-уведомления) и сборщику новостей
+      - name: Адрес функции — в настройки сайта
+        if: steps.check.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CUR=$(node -p "require('./content/settings.json').news_api_url || ''")
+          [ "$CUR" = "$URL" ] && exit 0
+          node -e "const f='content/settings.json',fs=require('fs'),s=JSON.parse(fs.readFileSync(f));s.news_api_url=process.env.URL;fs.writeFileSync(f,JSON.stringify(s,null,2)+'\n')"
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git commit -am "Адрес функции уведомлений"
+          git pull --rebase origin main && git push origin HEAD:main
+          gh workflow run deploy.yml --ref main
